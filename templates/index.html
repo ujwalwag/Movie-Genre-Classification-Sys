@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Movie Genre Predictor</title>
+  <style>
+    :root {
+      --bg-color: #141414;
+      --text-color: #ffffff;
+      --accent: #e50914;
+      --card-bg: #1f1f1f;
+      --hover: #ff1f2c;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+    }
+
+    nav {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      background-color: rgba(0, 0, 0, 0.9);
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      padding: 14px 0;
+      z-index: 1000;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    }
+
+    nav button {
+      background: none;
+      border: none;
+      color: var(--text-color);
+      font-size: 15px;
+      cursor: pointer;
+      transition: color 0.3s ease;
+    }
+
+    nav button:hover {
+      color: var(--accent);
+    }
+
+    .section {
+      padding: 100px 20px 60px; /* Extra top space for fixed navbar */
+      max-width: 1000px;
+      margin: auto;
+    }
+
+    h1, h2 {
+      color: var(--accent);
+    }
+
+    textarea {
+      width: 100%;
+      height: 120px;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      background-color: #2b2b2b;
+      color: white;
+      font-size: 15px;
+      margin-bottom: 20px;
+    }
+
+    input[type="file"] {
+      margin: 10px 0;
+    }
+
+    #preview {
+      max-height: 180px;
+      border-radius: 8px;
+      margin-top: 10px;
+      display: none;
+    }
+
+    .predict-btn {
+      background-color: var(--accent);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .predict-btn:hover {
+      background-color: var(--hover);
+    }
+
+    #result {
+      margin-top: 20px;
+      font-size: 16px;
+    }
+
+    .grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+      margin-top: 30px;
+    }
+
+    .genre {
+      width: 200px;
+      background-color: var(--card-bg);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      transform: scale(1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      position: relative;  /* Allow z-index to apply */
+      z-index: 1;           /* Base z-index */
+    }
+    
+    .genre:hover {
+      transform: scale(4); /* Moderate scale (5.0 is too extreme) */
+      box-shadow: 0 10px 20px rgba(229, 9, 20, 0.6);
+      z-index: 10;           /* Bring above others */
+    }
+    
+    
+
+    .genre img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .genre p {
+      padding: 10px;
+      text-align: center;
+      font-weight: bold;
+      color: var(--accent);
+      transition: text-shadow 0.3s ease;
+    }
+    
+    .genre:hover p {
+      text-shadow: 0 0 5px var(--accent), 0 0 10px var(--accent);
+    }
+    
+
+    @media (max-width: 600px) {
+      nav {
+        flex-wrap: wrap;
+        padding: 10px;
+      }
+
+      .genre {
+        width: 45%;
+      }
+
+    }
+    .carousel-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .carousel-container {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .scroll-btn {
+      background-color: transparent;
+      border: none;
+      font-size: 2rem;
+      cursor: pointer;
+      color: #444;
+      padding: 0 1rem;
+    }
+    
+    #carousel-image {
+      width: 800px;        
+      height: 450px;         
+      object-fit: cover;     
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    
+    
+    .carousel-description {
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    
+      
+  </style>
+</head>
+<body>
+
+  <!-- Fixed Navbar -->
+  <nav>
+    <div style="margin-right: auto; padding-left: 20px;">
+      <img src="{{ url_for('static', filename='assets/NEURALNETFLIX-5-2-2025.png') }}" alt="Logo" style="height: 30px;">
+    </div>
+    <button onclick="scrollToSection('about')">About</button>
+    <button onclick="scrollToSection('predict')">Predict</button>
+    <button onclick="scrollToSection('download')">Download</button>
+    <button onclick="scrollToSection('dataprep')">Data Preparation</button>
+    <button onclick="scrollToSection('modelling')">Model</button>
+    <button onclick="scrollToSection('metrics')">Metrics</button>
+    <button onclick="scrollToSection('webapp')">Web App</button>
+    <button onclick="scrollToSection('contributions')">Contributions</button>
+  </nav>
+  
+
+  <!-- About Section -->
+<div id="about" class="section" style="max-width:1200px;margin:auto;">
+  <h1>🎬 About the Project</h1>
+  <p>This capstone project in EAS 510 (Basics of AI, SUNY Buffalo) explores movie genre classification using two complementary deep-learning models—one for textual data and one for visual data. We collected and preprocessed data from TMDb/IMDb, including movie plot synopses and poster images. Two independent pipelines were developed: an LSTM-based model processes plot descriptions, while a CNN (ResNet) classifies poster images.</p>
+
+  <p>Each model was trained and evaluated separately, comparing performance against standard baselines. Through rigorous data preparation, metric-based evaluation, and hyperparameter tuning, the project highlights strengths and limitations of text-based and image-based classification.</p>
+
+  <p>The project emphasizes real-world AI practices like dataset curation, deep learning implementation, and model deployment. It culminates in a public-facing website allowing users to input text or upload posters, interactively predicting movie genres.</p>
+</div>
+
+<!-- Predict Section -->
+<div id="predict" class="section" style="max-width:1200px;margin:auto;">
+  <h2>🎞️ Predict a Genre</h2>
+
+  <div style="display:flex;flex-wrap:wrap;gap:40px;justify-content:center;">
+    <!-- Text Input -->
+    <div style="flex:1 1 350px;min-width:280px;display:flex;flex-direction:column;">
+      <h3 style="margin-top:0;">📝 Plot</h3>
+      <textarea id="movieText" placeholder="Enter your movie plot here..." style="flex:1;min-height:140px;padding:10px;border-radius:8px;background:#2b2b2b;color:#fff;border:none;"></textarea>
+    </div>
+
+    <!-- Image Input -->
+    <div style="flex:1 1 350px;min-width:280px;display:flex;flex-direction:column;">
+      <h3 style="margin-top:0;">📸 Poster</h3>
+      <input type="file" id="imageUpload" accept="image/*" onchange="previewImage()">
+      <img id="preview" src="#" alt="Poster Preview" style="display:none;margin-top:10px;max-width:100%;border-radius:8px;">
+    </div>
+  </div>
+
+  <div style="display:flex;justify-content:center;gap:40px;margin-top:25px;flex-wrap:wrap;">
+    <button class="predict-btn" style="width:180px;" onclick="predictGenre('text')">Predict from Plot</button>
+    <button class="predict-btn" style="width:180px;" onclick="predictGenre('image')">Predict from Poster</button>
+  </div>
+
+  <div id="result" style="margin-top:25px;font-size:18px;text-align:center;"></div>
+</div>
+
+<!-- Data Section -->
+<div id="download" class="section" style="max-width:1200px;margin:auto;">
+  <h2>🤖Download Data</h2>
+  <p>The <strong>TMDB Movie Dataset v11</strong> contains data on over 1,199,883 movies from TMDb. You can download it <a href="https://www.kaggle.com/datasets/asaniczka/tmdb-movies-dataset-2023-930k-movies?select=TMDB_movie_dataset_v11.csv" target="_blank" style="color:var(--accent);text-decoration:underline;">here</a>.</p>
+  <img src="{{ url_for('static', filename='assets/raw_data_info.jpg') }}" alt="Dataset preview" style="max-width:100%;border-radius:8px;margin-top:20px;box-shadow:0 4px 12px rgba(0,0,0,0.4);">
+
+  <p>Our balanced subset includes 111,630 films, detailed in 17 columns. Download the processed dataset <a href="{{ url_for('static', filename='data/strictly_balanced_top10_cleaned.csv') }}" download style="color:var(--accent);text-decoration:underline;">here</a>.</p>
+  <img src="{{ url_for('static', filename='assets/final_data_info.jpg') }}" alt="Cleaned dataset preview" style="max-width:100%;border-radius:8px;margin-top:20px;box-shadow:0 4px 12px rgba(0,0,0,0.4);">
+</div>
+
+<!-- EDA Section -->
+<div id="dataprep" class="section" style="max-width:1200px;margin:auto;">
+  <h2>📊 Data Preparation</h2>
+  <div class="carousel-wrapper">
+    <div class="carousel-description" id="carousel-desc">
+      <h3>EDA, Data Preprocessing, Feature Engineering</h3>
+      <p id="desc-text">The dataset loaded contains approximately 1.2 million movie records with 24 attributes each, covering a wide range of metadata such as titles, release dates, genres, languages, and production details. While key fields like id, vote_average, vote_count, status, runtime, and original_language are complete, many others have significant missing values. Notably, attributes like homepage, tagline, keywords, backdrop_path, and imdb_id show substantial data gaps, indicating optional or inconsistently recorded fields.</p>
+    </div>
+
+    <div class="carousel-container">
+      <button class="scroll-btn left" onclick="changeSlide(-1)">❮</button>
+      <img id="carousel-image" src="{{ url_for('static', filename='assets/testimage1.png') }}" alt="Movie Image">
+      <button class="scroll-btn right" onclick="changeSlide(1)">❯</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Modelling Section -->
+<div id="modelling" class="section" style="max-width:1200px;margin:auto;">
+  <h2>🧠 Model</h2>
+  <p></p>
+
+  
+  <h2>Text-Based Genre Classification — LSTM Model (GenreLSTM)</h2>
+<ul>
+  <li><strong>Architecture:</strong> A custom PyTorch model using:
+    <ul>
+      <li><strong>Pretrained GloVe Embeddings:</strong> These are used in a frozen embedding layer to convert tokenized overviews into dense vectors.</li>
+      <li><strong>Bidirectional LSTM:</strong> Captures context from both past and future tokens. Configured with:
+        <ul>
+          <li>input_size = 100 (GloVe dim),</li>
+          <li>hidden_size = 128,</li>
+          <li>batch_first = True,</li>
+          <li>bidirectional = True.</li>
+        </ul>
+      </li>
+      <li><strong>Pooling Layer:</strong> Mean pooling over the time dimension to reduce the sequence output to a fixed-length vector.</li>
+      <li><strong>Dropout:</strong> Prevents overfitting (rate = 0.3).</li>
+      <li><strong>Fully Connected Layer:</strong> Projects LSTM output to 10 genre logits (multi-label).</li>
+    </ul>
+  </li>
+  <li><strong>Loss Function:</strong> nn.BCEWithLogitsLoss() — ideal for multi-label classification.</li>
+  <li><strong>Optimizer:</strong> Adam optimizer with learning rate = 0.001.</li>
+</ul>
+  <div style="margin-bottom:100px;">
+    <h3>📖 Text Data Model Notebook</h3>
+    <textarea id="codeEditor" style="width:100%;height:300px;">## PyTorch LSTM Model
+      import torch.nn as nn
+      import torch.nn.functional as F
+      
+      class GenreLSTM(nn.Module):
+          def _init_(self, embedding_matrix, hidden_dim=128, dropout=0.3):
+              super(GenreLSTM, self)._init_()
+      
+              vocab_size, embedding_dim = embedding_matrix.shape
+      
+              # Embedding layer with pretrained GloVe weights
+              self.embedding = nn.Embedding(vocab_size, embedding_dim)
+              self.embedding.weight = nn.Parameter(torch.tensor(embedding_matrix, dtype=torch.float32))
+              self.embedding.weight.requires_grad = False  # freeze embeddings
+      
+              # LSTM layer
+              self.lstm = nn.LSTM(input_size=embedding_dim,
+                                  hidden_size=hidden_dim,
+                                  batch_first=True,
+                                  bidirectional=True)
+      
+              self.dropout = nn.Dropout(dropout)
+      
+              # Fully connected layer to output genre logits
+              self.fc = nn.Linear(hidden_dim * 2, 10)  # *2 for bidirectional
+      
+          def forward(self, x):
+              embedded = self.embedding(x)         # [B, 200, 100]
+              lstm_out, _ = self.lstm(embedded)    # [B, 200, 256]
+              pooled = torch.mean(lstm_out, dim=1) # average over time steps
+              dropped = self.dropout(pooled)
+              output = self.fc(dropped)            # [B, 10] (genre logits)
+              return output</textarea>
+    
+  </div>
+  <h2>Image-Based Genre Classification — ResNet-18</h2>
+
+<ul>
+  <li><strong>Base Model:</strong> Pretrained <code>ResNet-18</code> from <code>torchvision.models</code>, trained on ImageNet.
+    <ul>
+      <li>The final layer (<code>resnet.fc</code>) new layeren<code>nn.Linear</code> layer:
+        <ul>
+          <li><code>in_features = 512</code> (from ResNet),</li>
+          <li><code>out_features = 10</code> (matching number of genres).</li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+
+  <li><strong>Frozen Layers:</strong> Only the last fully connected layer is fine-tuned .</li>
+
+  <li><strong>Loss Function:</strong> <code>nn.BCEWithLogitsLoss()</code> — supports multi-label classification.</li>
+
+  <li><strong>Optimizer:</strong> <code>Adam</code>, learning rate = 0.001.</li>
+
+  <li><strong>Training Strategy:</strong>
+    <ul>
+      <li>Image data is passed through the ResNet backbone.</li>
+      <li>The sigmoid-activated logits represent genre probabilities.</li>
+      <li>Predictions are evaluated using micro-F1 score.</li>
+    </ul>
+  </li>
+</ul>
+
+  <div style="margin-bottom:100px;">
+    <h3>📖 Image Data Model Notebook</h3>
+    <textarea id="codeEditor" style="width:100%;height:300px;"># Pre-trained RESNET-18 Model
+      import torch
+      import torch.nn as nn
+      import torchvision.models as models
+      
+      # 1. Load ResNet-18 pretrained on ImageNet
+      resnet = models.resnet18(pretrained=True)
+      print(resnet)
+      
+      # 2. Modify the final FC layer
+      num_features = resnet.fc.in_features  
+      print(num_features)
+      resnet.fc = nn.Linear(num_features, len(genre_columns))  # 18 genres
+      print(resnet.fc)
+      
+      # 3. Move model to device
+      device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+      print(device)
+      resnet = resnet.to(device)
+      
+      print("✅ ResNet-18 loaded and modified for genre prediction!")</textarea>
+  </div>
+</div>
+
+
+<!-- Metrics Section -->
+<div id="metrics" class="section" style="max-width:1200px;margin:auto;">
+  <h2>🧬 Metrics</h2>
+
+  <!-- Text Model Metrics -->
+  <div>
+    <h3>📖 Text Model Metrics</h3>
+    <div class="grid">
+      <div class="genre"><img src="{{ url_for('static', filename='assets/text_met1.jpg') }}"><p>Loss Per Epoch</p></div>
+      <div class="genre"><img src="{{ url_for('static', filename='assets/text_met2.jpg') }}"><p>Micro F1</p></div>
+      <div class="genre"><img src="{{ url_for('static', filename='assets/text_met3.jpg') }}"><p>Predicted Text</p></div>
+    </div>
+  </div>
+
+  <!-- Image Model Metrics -->
+  <div style="margin-top:50px;">
+    <h3>🖼️ Image Model Metrics</h3>
+    <div class="grid">
+      <div class="genre"><img src="{{ url_for('static', filename='assets/image_met1.jpg') }}"><p>Loss Per Epoch</p></div>
+      <div class="genre"><img src="{{ url_for('static', filename='assets/image_met2.jpg') }}"><p>Micro F1</p></div>
+      <div class="genre"><img src="{{ url_for('static', filename='assets/image_met3.jpg') }}"><p>Predicted Image</p></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Web App Section -->
+<div id="webapp" class="section" style="max-width:1200px;margin:auto">
+  <h2>🌐 Web App</h2>
+  <p>Built with Flask (backend) and vanilla JS + HTML/CSS (frontend). Lightweight, responsive, and deployable anywhere.</p>
+</div>
+
+<!-- Contributions Section -->
+<div id="contributions" class="section" style="max-width:1200px;margin:auto;">
+  <h2>🤝 Contributions</h2>
+  <p>Built by Ujwal Waghray and Venkata Rami Reddy—graduate students at SUNY Buffalo specializing in Robotics and Internet‑of‑Things (IoT). Ujwal developed the NLP pipeline, LSTM model, and Flask integration, while Venkat handled the CNN, data engineering, and exploratory analysis. Together, they created a multimodal ML application with a Netflix-inspired UI.</p>
+
+  <div style="display:flex;justify-content:center;gap:40px;flex-wrap:wrap;margin-top:30px;">
+    <!-- Contributor 1 -->
+    <div style="text-align:center;max-width:200px;">
+      <img src="{{ url_for('static', filename='assets/ujwal.jpg') }}" alt="Ujwal Waghray" style="width:100%;border-radius:12px;box-shadow:0 4px 8px rgba(0,0,0,0.3);">
+      <p style="margin-top:10px;"><strong>Ujwal Waghray</strong><br>Text Model, Flask, UI</p>
+    </div>
+
+    <!-- Contributor 2 -->
+    <div style="text-align:center;max-width:200px;">
+      <img src="{{ url_for('static', filename='assets/rami.jpg') }}" alt="Venkata Rami Reddy" style="width:100%;border-radius:12px;box-shadow:0 4px 8px rgba(0,0,0,0.3);">
+      <p style="margin-top:10px;"><strong>Venkata Rami Reddy</strong><br>Image Model, Data Cleaning, EDA</p>
+    </div>
+  </div>
+</div>
+
+  
+  <script>
+    const images = [
+      "{{ url_for('static', filename='assets/1.jpg') }}",
+      "{{ url_for('static', filename='assets/2.jpg') }}",
+      "{{ url_for('static', filename='assets/3.jpg') }}",
+      "{{ url_for('static', filename='assets/4.jpg') }}",
+      "{{ url_for('static', filename='assets/5.jpg') }}",
+      "{{ url_for('static', filename='assets/6.jpg') }}",
+      "{{ url_for('static', filename='assets/7.jpg') }}",
+      "{{ url_for('static', filename='assets/8.jpg') }}",
+      
+    ];
+  
+    const descriptions = [
+      "The dataset loaded contains approximately 1.2 million movie records with 24 attributes each, covering a wide range of metadata such as titles, release dates, genres, languages, and production details. While key fields like id, vote_average, vote_count, status, runtime, and original_language are complete, many others have significant missing values. Notably, attributes like homepage, tagline, keywords, backdrop_path, and imdb_id show substantial data gaps, indicating optional or inconsistently recorded fields.",
+      "This chart shows that Drama, Comedy, and Documentary are the most represented genres, with Drama alone appearing in over 70,000 movies",
+      "Plot summaries mostly range between 20 to 60 words, with an average of ~45 words per movie; also, there are 19 unique genres across nearly 1.2 million films",
+      "Most movies belong to only one , two or three genres",
+      "The image shows the transformation of raw movie plot summaries into cleaned text by removing stop words and applying preprocessing (likely for GloVe embedding), preparing the data for NLP tasks.",
+      "The image confirms the cleaned dataset has 200,243 records with no missing values across essential columns (id, genres, overview, poster_path, and keywords). A preview of the data is shown with structured metadata for each movie.",
+      "This image illustrates the result of one-hot encoding applied to movie genres in a multi-label format. Each column represents a unique genre, and each row corresponds to a movie. A value of 1 means the movie belongs to that genre, while 0 indicates it does not. Unlike single-label one-hot encoding, this setup allows multiple 1s per row, capturing the fact that movies can belong to multiple genres simultaneously—an essential step for multi-label classification tasks",
+      "The bar chart displays the strictly balanced genre distribution for the top 10 movie genres, each capped at a maximum of 20,000 films. This balanced subset was created to ensure equal representation across genres, addressing class imbalance issues common in multi-label classification. Since all selected entries include both plot overviews and poster paths, this curated dataset is ideal for training both text-based and image-based models for genre prediction",
+    
+
+    ];
+  
+    let currentSlide = 0;
+  
+    function changeSlide(direction) {
+      currentSlide += direction;
+  
+      if (currentSlide < 0) currentSlide = images.length - 1;
+      if (currentSlide >= images.length) currentSlide = 0;
+  
+      document.getElementById("carousel-image").src = images[currentSlide];
+      document.getElementById("desc-text").innerText = descriptions[currentSlide];
+    }
+  </script>
+  <script>
+    function scrollToSection(id) {
+      document.getElementById(id).scrollIntoView({ behavior: "smooth" });
+    }
+  </script>
+  
+  <script>
+    async function predictGenre() {
+      const text = document.getElementById("movieText").value.trim();
+      const resultBox = document.getElementById("result");
+  
+      if (!text) {
+        resultBox.innerText = "⚠️ Please enter a movie plot.";
+        return;
+      }
+  
+      resultBox.innerText = "⏳ Predicting...";
+  
+      // Send JSON with key "plot" to match Flask
+      const response = await fetch("/predict", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plot: text })
+      });
+  
+      if (!response.ok) {
+        resultBox.innerText = "❌ Server error. Try again.";
+        return;
+      }
+  
+      const result = await response.json();
+      resultBox.innerText =
+        "🎬 Predicted Genres: " + (result.genres || []).join(", ");
+    }
+  </script>
+  
+
+  <script>
+    // Preview poster
+    function previewImage () {
+      const file = document.getElementById("imageUpload").files[0];
+      const img  = document.getElementById("preview");
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = e => { img.src = e.target.result; img.style.display = "block"; };
+        reader.readAsDataURL(file);
+      } else { img.style.display = "none"; }
+    }
+  
+    // Generic handler — mode = 'text' or 'image'
+    async function predictGenre (mode) {
+      const resultBox = document.getElementById("result");
+      resultBox.innerText = "⏳ Predicting...";
+  
+      let payload, url = "/predict";
+      if (mode === "text") {
+        const plot = document.getElementById("movieText").value.trim();
+        if (!plot) { resultBox.innerText = "⚠️ Please enter a movie plot."; return; }
+        payload = { plot };
+      } else {
+        const fileInput = document.getElementById("imageUpload");
+        if (!fileInput.files[0]) { resultBox.innerText = "⚠️ Please select a poster."; return; }
+        const formData = new FormData();
+        formData.append("poster", fileInput.files[0]);
+        payload = formData;
+        url = "/predict_image";          // adjust if your backend uses a different route
+      }
+  
+      const opts = mode === "text"
+        ? { method:"POST", headers:{ "Content-Type":"application/json" }, body:JSON.stringify(payload) }
+        : { method:"POST", body:payload };
+  
+      const res = await fetch(url, opts);
+      if (!res.ok) { resultBox.innerText = "❌ Server error."; return; }
+  
+      const data = await res.json();
+      resultBox.innerText = "🎬 Predicted Genres: " + (data.genres || []).join(", ");
+    }
+  </script>
+  
+
+
+
+</body>
+</html>
+

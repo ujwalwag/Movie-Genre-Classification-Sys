@@ -1,0 +1,10 @@
+flask
+scikit-learn
+joblib
+numpy
+nltk>=3.8
+Flask
+torch
+torchvision
+numpy
+Pillow
