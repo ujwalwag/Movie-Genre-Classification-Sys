@@ -8,3 +8,5 @@ torch
 torchvision
 numpy
 Pillow
+keras
+tensorflow
