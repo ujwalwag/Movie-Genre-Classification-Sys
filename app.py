@@ -5,6 +5,7 @@ import numpy as np
 import pickle
 from PIL import Image
 from torchvision import models, transforms
+import os
 
 # ─────────────────────────── Flask setup ────────────────────────────────
 app = Flask(__name__, static_folder='static', template_folder='templates')
@@ -14,15 +15,15 @@ GENRE_COLUMNS = [
     'Drama', 'Comedy', 'Romance', 'Thriller', 'Action',
     'Horror', 'Documentary', 'Animation', 'Music', 'Crime'
 ]
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(f"✅  Using device: {DEVICE}")
+DEVICE = torch.device("cpu")  # Force CPU usage for Render.com
+print(f"✅ Using device: {DEVICE}")
 
 # ─────────────────────────── Load text artifacts ────────────────────────
 with open('models/tokenizer.pickle', 'rb') as f:
     tokenizer = pickle.load(f)
 embedding_matrix = np.load('models/embedding_matrix.npy')
 txt_state = torch.load('models/genre_classifier.pth', map_location=DEVICE)
-print("✅  Text artifacts loaded.")
+print("✅ Text artifacts loaded.")
 
 # ─────────────── Text-model definition & instantiation ──────────────────
 class GenreLSTM(nn.Module):
@@ -47,26 +48,24 @@ class GenreLSTM(nn.Module):
 text_model = GenreLSTM(embedding_matrix).to(DEVICE)
 text_model.load_state_dict(txt_state)
 text_model.eval()
-print("✅  Text model ready.")
+print("✅ Text model ready.")
 
 # ─────────────────────────── Load poster model ──────────────────────────
-# Start from ImageNet‐pretrained ResNet34, replace final head
-poster_model = models.resnet34(pretrained=True)
+poster_model = models.resnet34(pretrained=False)
 poster_model.fc = nn.Linear(poster_model.fc.in_features, len(GENRE_COLUMNS))
 
 img_state = torch.load('models/poster_genre_classifier.pth', map_location=DEVICE)
-# Load only matching keys (our checkpoint likely contains only the fc layer)
 poster_model.load_state_dict(img_state, strict=False)
 poster_model.to(DEVICE).eval()
-print("✅  Poster model ready.")
+print("✅ Poster model ready.")
 
 # ─────────────────── Image preprocessing pipeline ───────────────────────
 IMG_TF = transforms.Compose([
     transforms.Resize(256),
     transforms.CenterCrop(224),
     transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485,0.456,0.406],
-                         std= [0.229,0.224,0.225])
+    transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                         std=[0.229, 0.224, 0.225])
 ])
 
 # ─────────────────────────── Routes ─────────────────────────────────────
@@ -81,7 +80,6 @@ def predict_text():
     if not plot:
         return jsonify({"error": "No plot provided"}), 400
 
-    # Text → token indices → padded tensor
     seq = tokenizer.texts_to_sequences([plot])[0][:200]
     arr = np.zeros((1, 200), dtype=np.int64)
     arr[0, :len(seq)] = seq
@@ -114,4 +112,5 @@ def predict_image():
 
 # ─────────────────────────── Main ───────────────────────────────────────
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=10000)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
