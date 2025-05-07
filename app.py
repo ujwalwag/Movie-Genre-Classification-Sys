@@ -69,6 +69,11 @@ IMG_TF = transforms.Compose([
 ])
 
 # ─────────────────────────── Routes ─────────────────────────────────────
+
+device = torch.device('cpu')
+
+port = int(os.environ.get("PORT", 5000))
+
 @app.route("/")
 def home():
     return render_template("index.html")
