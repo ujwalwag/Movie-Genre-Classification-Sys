@@ -5,7 +5,6 @@ import numpy as np
 import pickle
 from PIL import Image
 from torchvision import models, transforms
-import os
 
 # ─────────────────────────── Flask setup ────────────────────────────────
 app = Flask(__name__, static_folder='static', template_folder='templates')
@@ -15,25 +14,24 @@ GENRE_COLUMNS = [
     'Drama', 'Comedy', 'Romance', 'Thriller', 'Action',
     'Horror', 'Documentary', 'Animation', 'Music', 'Crime'
 ]
-DEVICE = torch.device("cpu")  # Force CPU usage for Render.com
+DEVICE = torch.device("cpu")
 print(f"✅ Using device: {DEVICE}")
 
-# ─────────────────────────── Load text artifacts ────────────────────────
+# ─────────────────────── Load text artifacts ────────────────────────────
 with open('models/tokenizer.pickle', 'rb') as f:
     tokenizer = pickle.load(f)
 embedding_matrix = np.load('models/embedding_matrix.npy')
 txt_state = torch.load('models/genre_classifier.pth', map_location=DEVICE)
 print("✅ Text artifacts loaded.")
 
-# ─────────────── Text-model definition & instantiation ──────────────────
+# ───────────── GenreLSTM definition & initialization ────────────────────
 class GenreLSTM(nn.Module):
     def __init__(self, emb, hid=128, drop=0.3):
         super().__init__()
         vocab_size, emb_dim = emb.shape
         self.embedding = nn.Embedding(vocab_size, emb_dim)
         self.embedding.weight = nn.Parameter(
-            torch.tensor(emb, dtype=torch.float32),
-            requires_grad=False
+            torch.tensor(emb, dtype=torch.float32), requires_grad=False
         )
         self.lstm = nn.LSTM(emb_dim, hid, batch_first=True, bidirectional=True)
         self.dropout = nn.Dropout(drop)
@@ -50,7 +48,7 @@ text_model.load_state_dict(txt_state)
 text_model.eval()
 print("✅ Text model ready.")
 
-# ─────────────────────────── Load poster model ──────────────────────────
+# ─────────────── Load ResNet-34 poster model (non-pretrained) ───────────
 poster_model = models.resnet34(pretrained=False)
 poster_model.fc = nn.Linear(poster_model.fc.in_features, len(GENRE_COLUMNS))
 
@@ -59,21 +57,16 @@ poster_model.load_state_dict(img_state, strict=False)
 poster_model.to(DEVICE).eval()
 print("✅ Poster model ready.")
 
-# ─────────────────── Image preprocessing pipeline ───────────────────────
+# ─────────────── Image preprocessing pipeline ───────────────────────────
 IMG_TF = transforms.Compose([
     transforms.Resize(256),
     transforms.CenterCrop(224),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                         std=[0.229, 0.224, 0.225])
+                         std= [0.229, 0.224, 0.225])
 ])
 
 # ─────────────────────────── Routes ─────────────────────────────────────
-
-device = torch.device('cpu')
-
-port = int(os.environ.get("PORT", 5000))
-
 @app.route("/")
 def home():
     return render_template("index.html")
@@ -116,8 +109,6 @@ def predict_image():
     return jsonify({"genres": [GENRE_COLUMNS[i] for i in top3]})
 
 # ─────────────────────────── Main ───────────────────────────────────────
-import os
-
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000)) 
+    port = int(os.environ.get("PORT", 10000))  # Render sets PORT dynamically
     app.run(host="0.0.0.0", port=port)
