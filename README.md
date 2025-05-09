@@ -26,7 +26,7 @@ This is a Flask-based web application for **multi-label movie genre classificati
 ```
 .
 ├── app.py                      # Flask app entry point
-├── models/├── tokenizer.json                 # Contains tokenizer, weights, embedding matrix,# Saved tokenizer for inference
+├── models/├── tokenizer.json   # Contains tokenizer, weights, embedding matrix,# Saved tokenizer for inference
 ├── templates/                  # HTML templates (Jinja2)
 ├── static/                     # Static assets like CSS, JS
 ├── scripts/                    # Training scripts
@@ -35,7 +35,6 @@ This is a Flask-based web application for **multi-label movie genre classificati
 ├── webapp/                     # Web deployment configs
 ├── requirements.txt            # Python dependencies
 ├── Dockerfile                  # Docker container instructions
-├── X_text.npy / y_labels.npy # Preprocessed data samples
 ```
 
 ---
@@ -49,7 +48,10 @@ Make sure you have the following installed:
 - Python 3.8+
 - `pip`
 - Git
-- Optional: Docker
+- tensorflow
+- torchvisiob
+- keras
+- Docker(for web deployment)
 
 ---
 
@@ -88,8 +90,8 @@ Open your browser and go to `http://127.0.0.1:5000`
 ### 🐳 Run with Docker
 
 ```bash
-docker build -t genre-classifier .
-docker run -p 5000:5000 genre-classifier
+docker build -t movie-genre-classifier .
+docker run -p 5000:5000 movie-genre-classifier
 ```
 
 ---
@@ -138,6 +140,7 @@ docker run -p 5000:5000 genre-classifier
 
 ## 🤝 Acknowledgements
 
+- EAS 510 Basics of AI lectures from UB
 - TMDB Dataset
 - GloVe Embeddings (Stanford)
 - PyTorch, Flask, torchvision
