@@ -100,7 +100,7 @@ docker run -p 5000:5000 movie-genre-classifier
 
 1. Visit the web app.
 2. Enter a **movie plot (overview)** to predict based on text.
-3. Upload a **poster image** to predict based on movie postre.
+3. Upload a **poster image** to predict based on movie poster.
 4. Click **Predict** to get genre predictions from:
    - The **Text model**, the **Image model**.
 
