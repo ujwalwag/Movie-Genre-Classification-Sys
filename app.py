@@ -57,27 +57,37 @@ def predict_text():
         return jsonify({"error": "No plot provided"}), 400
 
     try:
+        print("🔍 Loading tokenizer...")
         with open('models/tokenizer.pickle', 'rb') as f:
             tokenizer = pickle.load(f)
+
+        print("🔍 Loading embedding matrix and model state...")
         embedding_matrix = np.load('models/embedding_matrix.npy')
         txt_state = torch.load('models/genre_classifier.pth', map_location=DEVICE)
 
+        print("🔍 Initializing model...")
         model = GenreLSTM(embedding_matrix).to(DEVICE)
         model.load_state_dict(txt_state)
         model.eval()
 
+        print("🔍 Tokenizing input...")
         seq = tokenizer.texts_to_sequences([plot])[0][:200]
         arr = np.zeros((1, 200), dtype=np.int64)
         arr[0, :len(seq)] = seq
         tensor = torch.tensor(arr, dtype=torch.long, device=DEVICE)
 
+        print("🔍 Predicting...")
         with torch.no_grad():
             probs = torch.sigmoid(model(tensor))[0].cpu().numpy()
+
         top3 = probs.argsort()[-3:][::-1]
+        print("✅ Prediction done.")
         return jsonify({"genres": [GENRE_COLUMNS[i] for i in top3]})
 
     except Exception as e:
+        print(f"❌ Exception: {str(e)}")
         return jsonify({"error": f"Failed to predict: {str(e)}"}), 500
+
 
 @app.route("/predict_image", methods=["POST"])
 def predict_image():
