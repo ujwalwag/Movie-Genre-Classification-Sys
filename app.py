@@ -3,7 +3,7 @@ from flask import Flask, request, jsonify, render_template
 import torch
 import torch.nn as nn
 import numpy as np
-import json
+import pickle
 from PIL import Image
 from torchvision import models, transforms
 
@@ -44,16 +44,6 @@ class GenreLSTM(nn.Module):
         dropped = self.dropout(pooled)
         return self.fc(dropped)
 
-# ─────────── Utility: Manual Text Tokenizer ───────────
-def texts_to_sequences(texts, word_index, max_len=200):
-    sequences = []
-    for text in texts:
-        tokens = text.lower().split()
-        seq = [word_index.get(word, 0) for word in tokens][:max_len]
-        seq += [0] * (max_len - len(seq))  # pad with 0s
-        sequences.append(seq)
-    return np.array(sequences, dtype=np.int64)
-
 # ─────────── Routes ───────────
 @app.route("/")
 def home():
@@ -67,8 +57,8 @@ def predict_text():
         return jsonify({"error": "No plot provided"}), 400
 
     try:
-        with open('models/tokenizer.json', 'r') as f:
-            word_index = json.load(f)
+        with open('models/tokenizer.pickle', 'rb') as f:
+            tokenizer = pickle.load(f)
         embedding_matrix = np.load('models/embedding_matrix.npy')
         txt_state = torch.load('models/genre_classifier.pth', map_location=DEVICE)
 
@@ -76,8 +66,10 @@ def predict_text():
         model.load_state_dict(txt_state)
         model.eval()
 
-        seq_arr = texts_to_sequences([plot], word_index)  # shape: (1, 200)
-        tensor = torch.tensor(seq_arr, dtype=torch.long, device=DEVICE)
+        seq = tokenizer.texts_to_sequences([plot])[0][:200]
+        arr = np.zeros((1, 200), dtype=np.int64)
+        arr[0, :len(seq)] = seq
+        tensor = torch.tensor(arr, dtype=torch.long, device=DEVICE)
 
         with torch.no_grad():
             probs = torch.sigmoid(model(tensor))[0].cpu().numpy()
@@ -117,3 +109,4 @@ def predict_image():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
+
