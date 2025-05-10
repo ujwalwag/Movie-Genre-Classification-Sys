@@ -1,12 +1,6 @@
 flask
 gunicorn
-scikit-learn
-joblib
-numpy
-nltk>=3.8
 torch
 torchvision
-Pillow
-tensorflow==2.13.0
-keras==2.13.1
-matplotlib
+numpy
+pillow
