@@ -1,6 +1,9 @@
 flask
 gunicorn
+scikit-learn
+joblib
+numpy
+nltk>=3.8
 torch
 torchvision
-numpy
-pillow
+Pillow
