@@ -263,6 +263,8 @@
 
   <p>Our balanced subset includes 111,630 films, detailed in 17 columns. Download the processed dataset <a href="{{ url_for('static', filename='data/strictly_balanced_top10_cleaned.csv') }}" download style="color:var(--accent);text-decoration:underline;">here</a>.</p>
   <img src="{{ url_for('static', filename='assets/final_data_info.jpg') }}" alt="Cleaned dataset preview" style="max-width:100%;border-radius:8px;margin-top:20px;box-shadow:0 4px 12px rgba(0,0,0,0.4);">
+  <p>Because of its rich multi-modal structure, which includes both verbal (plot summaries) and visual (poster images) data that are crucial for training deep learning models in genre classification, we selected the TMDB Movie Dataset v11. Real-world movie classification is reflected in its multi-label genre annotations, and diverse and representative learning is guaranteed by the dataset's size (1.2M+ entries). The dataset is publically available, well-structured, and closely related to our objective of developing a multi-modal movie genre prediction engine.</p> 
+
 </div>
 
 <!-- EDA Section -->
@@ -288,7 +290,25 @@
   <h2>🧠 Model</h2>
   <p></p>
 
-  
+  <h2> Why LSTM for Text-Based Genre Classification?</h2>
+<ul>
+  <li><strong>Sequential Text Understanding:</strong>
+    LSTMs are built to handle sequence data, making them ideal for modeling the narrative flow and structure of movie plots.
+  </li>
+  <li><strong>Superior Context Capture over Traditional ML:</strong>
+    Unlike SVMs or Naive Bayes which treat text as unordered features, LSTMs maintain temporal word relationships critical to meaning.
+  </li>
+  <li><strong>Lightweight Compared to Transformers:</strong>
+    LSTMs offer a good trade-off between performance and resource usage. Unlike BERT or GPT models, LSTMs can be deployed efficiently without GPUs.
+  </li>
+  <li><strong>Low Latency Deployment:</strong>
+    LSTM models are smaller in size and provide faster inference, which is well-suited for web-based real-time genre prediction systems.
+  </li>
+  <li><strong>Easy Integration with Pretrained GloVe Embeddings:</strong>
+    LSTMs work well with static word embeddings like GloVe, which allows leveraging semantic knowledge without the complexity of transformer tokenization or fine-tuning.
+  </li>
+</ul>
+
   <h2>Text-Based Genre Classification — LSTM Model (GenreLSTM)</h2>
 <ul>
   <li><strong>Architecture:</strong> A custom PyTorch model using:
@@ -347,6 +367,25 @@
               return output</textarea>
     
   </div>
+  <h2>Why ResNet for Image-Based Genre Classification?</h2>
+<ul>
+  <li><strong>Proven CNN Architecture:</strong>
+    ResNet-18 is a reliable and widely adopted convolutional network architecture that performs well on classification tasks with limited overfitting.
+  </li>
+  <li><strong>Residual Learning:</strong>
+    The residual connections allow deeper network training by mitigating vanishing gradients, enabling the model to learn both low-level textures and high-level scene features from movie posters.
+  </li>
+  <li><strong>Transfer Learning with ImageNet:</strong>
+    Using pretrained weights accelerates convergence and helps the model identify genre-related patterns (e.g., color palettes, shapes, layouts) even with limited training data.
+  </li>
+  <li><strong>Fast Inference & Deployment:</strong>
+    ResNet-18’s compact size ensures efficient CPU-based inference, making it ideal for deployment on web servers without requiring heavy GPU resources.
+  </li>
+  <li><strong>Flexible Final Layer:</strong>
+    The architecture allows easy replacement of the final fully connected layer to output multi-label predictions using sigmoid activations — perfectly suited for multi-genre classification.
+  </li>
+</ul>
+
   <h2>Image-Based Genre Classification — ResNet-18</h2>
 
 <ul>
@@ -402,7 +441,6 @@
   </div>
 </div>
 
-
 <!-- Metrics Section -->
 <div id="metrics" class="section" style="max-width:1200px;margin:auto;">
   <h2>🧬 Metrics</h2>
@@ -411,9 +449,22 @@
   <div>
     <h3>📖 Text Model Metrics</h3>
     <div class="grid">
-      <div class="genre"><img src="{{ url_for('static', filename='assets/text_met1.jpg') }}"><p>Loss Per Epoch</p></div>
-      <div class="genre"><img src="{{ url_for('static', filename='assets/text_met2.jpg') }}"><p>Micro F1</p></div>
-      <div class="genre"><img src="{{ url_for('static', filename='assets/text_met3.jpg') }}"><p>Predicted Text</p></div>
+      <div class="genre">
+        <img src="{{ url_for('static', filename='assets/text_met1.jpg') }}" alt="Text Loss">
+        <p>Loss Per Epoch</p>
+      </div>
+      <div class="genre">
+        <img src="{{ url_for('static', filename='assets/text_met2.jpg') }}" alt="Text Micro F1">
+        <p>Micro F1 Score</p>
+      </div>
+      <div class="genre">
+        <img src="{{ url_for('static', filename='assets/text_met3.jpg') }}" alt="Text Predictions">
+        <p>Example Predictions</p>
+      </div>
+      <div class="genre">
+        <img src="{{ url_for('static', filename='assets/classwise_performance_text.png') }}" alt="Text Classwise">
+        <p>Class-Wise Performance</p>
+      </div>
     </div>
   </div>
 
@@ -421,9 +472,22 @@
   <div style="margin-top:50px;">
     <h3>🖼️ Image Model Metrics</h3>
     <div class="grid">
-      <div class="genre"><img src="{{ url_for('static', filename='assets/image_met1.jpg') }}"><p>Loss Per Epoch</p></div>
-      <div class="genre"><img src="{{ url_for('static', filename='assets/image_met2.jpg') }}"><p>Micro F1</p></div>
-      <div class="genre"><img src="{{ url_for('static', filename='assets/image_met3.jpg') }}"><p>Predicted Image</p></div>
+      <div class="genre">
+        <img src="{{ url_for('static', filename='assets/image_met1.jpg') }}" alt="Image Loss">
+        <p>Loss Per Epoch</p>
+      </div>
+      <div class="genre">
+        <img src="{{ url_for('static', filename='assets/image_met2.jpg') }}" alt="Image Micro F1">
+        <p>Micro F1 Score</p>
+      </div>
+      <div class="genre">
+        <img src="{{ url_for('static', filename='assets/image_met3.jpg') }}" alt="Image Predictions">
+        <p>Example Predictions</p>
+      </div>
+      <div class="genre">
+        <img src="{{ url_for('static', filename='assets/classwise_peformance_image.png') }}" alt="Image Classwise">
+        <p>Class-Wise Performance</p>
+      </div>
     </div>
   </div>
 </div>
@@ -466,6 +530,7 @@
       "{{ url_for('static', filename='assets/6.jpg') }}",
       "{{ url_for('static', filename='assets/7.jpg') }}",
       "{{ url_for('static', filename='assets/8.jpg') }}",
+      
       
     ];
   
@@ -559,8 +624,7 @@
         const formData = new FormData();
         formData.append("poster", fileInput.files[0]);
         payload = formData;
-        url = "/predict_image";          // adjust if your backend uses a different route
-      }
+        url = "/predict_image";          
   
       const opts = mode === "text"
         ? { method:"POST", headers:{ "Content-Type":"application/json" }, body:JSON.stringify(payload) }
